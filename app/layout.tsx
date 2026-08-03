@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
+import {
+  ClerkProvider,
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 const archivoBlack = Archivo_Black({
   subsets: ["latin"],
@@ -26,11 +35,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${archivoBlack.variable} ${spaceGrotesk.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${archivoBlack.variable} ${spaceGrotesk.variable} h-full antialiased`}
+        suppressHydrationWarning
+      >
+        <body className="min-h-full flex flex-col">
+          <header className="flex justify-end items-center p-4 gap-4 h-16">
+            <Show when="signed-out">
+              <SignInButton>
+                <Button className="rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
+                  Sign In
+                </Button>
+              </SignInButton>
+              <SignUpButton>
+                <Button className="rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
+                  Sign Up
+                </Button>
+              </SignUpButton>
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
+          </header>
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
