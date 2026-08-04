@@ -1,8 +1,26 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import clerkNext from "@clerk/eslint-plugin/next";
 
 const eslintConfig = defineConfig([
+  {
+    plugins: { "@clerk/next": clerkNext },
+    rules: {
+      "@clerk/next/require-auth-protection": [
+        "error",
+        {
+          protected: ["/"],
+          public: ["/sign-in(.*)", "/sign-up(.*)"],
+          resources: {
+            routeHandlers: true,
+            serverFunctions: true,
+            serverComponentEntrypoints: false,
+          },
+        },
+      ],
+    },
+  },
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
