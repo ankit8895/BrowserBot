@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/themes";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const archivoBlack = Archivo_Black({
   subsets: ["latin"],
@@ -39,7 +40,7 @@ export default function RootLayout({
           appearance={{ theme: shadcn }}
           taskUrls={{ "choose-organization": "/choose-organization" }}
         >
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
           <Toaster />
         </ClerkProvider>
       </body>
