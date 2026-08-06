@@ -20,7 +20,8 @@ import type { Workflow } from "@/lib/db/schema";
 import { PlusIcon, WorkflowIcon } from "lucide-react";
 import { useTransition } from "react";
 import { generateSlug } from "../lib/generate-slug";
-
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 interface WorkflowNavProps {
   workflows: Workflow[];
   onCreateWorkflow: (name: string) => Promise<void>;
@@ -28,6 +29,7 @@ interface WorkflowNavProps {
 
 const WorkflowNav = ({ workflows, onCreateWorkflow }: WorkflowNavProps) => {
   const { state } = useSidebar();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
   const handleCreateWorkflow = () => {
@@ -38,8 +40,13 @@ const WorkflowNav = ({ workflows, onCreateWorkflow }: WorkflowNavProps) => {
 
   const workflowItems = workflows.map((workflow) => (
     <SidebarMenuItem key={workflow.id}>
-      <SidebarMenuButton>
-        <span>{workflow.name}</span>
+      <SidebarMenuButton
+        asChild
+        isActive={pathname === `/workflows/${workflow.id}`}
+      >
+        <Link href={`/workflows/${workflow.id}`}>
+          <span>{workflow.name}</span>
+        </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   ));
