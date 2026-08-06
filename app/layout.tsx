@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const archivoBlack = Archivo_Black({
   subsets: ["latin"],
@@ -40,8 +41,10 @@ export default function RootLayout({
           appearance={{ theme: shadcn }}
           taskUrls={{ "choose-organization": "/choose-organization" }}
         >
-          <TooltipProvider>{children}</TooltipProvider>
-          <Toaster />
+          <ThemeProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
+          </ThemeProvider>
         </ClerkProvider>
       </body>
     </html>
