@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-head: var(--font-head);
@@ -74,4 +78,11 @@
   --border: #000;
   --input: #262320;
   --ring: #ffdc58;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer !important;
+  }
 }

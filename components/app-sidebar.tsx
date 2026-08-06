@@ -1,7 +1,5 @@
-"use client";
-
 import React from "react";
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { OrganizationSwitcher } from "@clerk/nextjs";
 import {
   Sidebar,
   SidebarContent,
@@ -9,20 +7,17 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "./ui/sidebar";
-import { useUser, useClerk } from "@clerk/nextjs";
 import WorkflowNav from "@/features/workflows/components/workflow-nav";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { auth } from "@clerk/nextjs/server";
+import { createdWorkflowActions } from "@/features/workflows/actions";
+import { listWorkflows } from "@/features/workflows/data";
+import UserAvatar from "./user-avatar";
 
-const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
-  const { openUserProfile, signOut } = useClerk();
-  const { user } = useUser();
+const AppSidebar = async ({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) => {
+  const { orgId } = await auth();
+  const workflows = orgId ? await listWorkflows(orgId) : [];
   return (
     <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader className="flex-row items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
@@ -38,35 +33,13 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
         <SidebarTrigger />
       </SidebarHeader>
       <SidebarContent>
-        <WorkflowNav />
+        <WorkflowNav
+          workflows={workflows}
+          onCreateWorkflow={createdWorkflowActions}
+        />
       </SidebarContent>
       <SidebarFooter className="group-data-[collapsible=icon]:items-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant={"ghost"} size={"icon"} className="rounded-full">
-              <Avatar>
-                <AvatarImage
-                  src={user?.imageUrl || "./images/avatar.webp"}
-                  alt={user?.fullName || "user"}
-                />
-                <AvatarFallback>
-                  {user?.firstName?.charAt(0) || "B"}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => openUserProfile()}>
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => signOut({ redirectUrl: "/sign-in" })}
-              className="text-destructive"
-            >
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserAvatar />
       </SidebarFooter>
     </Sidebar>
   );
