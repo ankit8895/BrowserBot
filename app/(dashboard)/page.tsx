@@ -1,6 +1,4 @@
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { PlusIcon, WorkflowIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -9,7 +7,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Button } from "@/components/ui/button";
+import { auth } from "@clerk/nextjs/server";
+import { PlusIcon, WorkflowIcon } from "lucide-react";
 
 const page = async () => {
   await auth.protect();
