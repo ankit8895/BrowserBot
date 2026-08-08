@@ -1,74 +1,10 @@
-// "use client";
-
-// import { Button } from "@/components/ui/button";
-// import { useRealtimeRun } from "@trigger.dev/react-hooks";
-// import { Loader2Icon, PlayIcon } from "lucide-react";
-// import { useState, useTransition } from "react";
-// import { runWorkflowAction } from "../actions";
-
-// type RunHandle = {
-//   id: string;
-//   publicAccessToken: string;
-// };
-
-// function RunStatus({ handle }: { handle: RunHandle }) {
-//   const { run, error } = useRealtimeRun(handle.id, {
-//     accessToken: handle.publicAccessToken,
-//   });
-
-//   if (error)
-//     return <p className="text-sm text-destructive">Error: {error.message}</p>;
-
-//   if (!run)
-//     return (
-//       <p className="text-sm text-muted-foreground">Starting run&hellip;</p>
-//     );
-
-//   return (
-//     <div className="flex flex-col items-center gap-1 text-sm">
-//       <p className="text-muted-foreground">
-//         Status:{" "}
-//         <span className="font-medium text-foreground">{run.status}</span>
-//       </p>
-//       {run.status === "COMPLETED" && run.output ? (
-//         <p className="text-muted-foreground">
-//           {(run.output as { message?: string }).message}
-//         </p>
-//       ) : null}
-//     </div>
-//   );
-// }
-
-// const RightSidebar = () => {
-//   const [isPending, startTransition] = useTransition();
-//   const [handle, setHandle] = useState<RunHandle | null>(null);
-
-//   const onRun = () => {
-//     startTransition(async () => {
-//       const result = await runWorkflowAction();
-//       setHandle({ id: result.id, publicAccessToken: result.publicAccessToken });
-//     });
-//   };
-//   return (
-//     <div className="flex size-full flex-col items-center justify-center gap-4">
-//       <Button onClick={onRun} disabled={isPending}>
-//         {isPending ? <Loader2Icon className="animate-spin" /> : <PlayIcon />}
-//         Run
-//       </Button>
-//       {handle ? <RunStatus handle={handle} /> : null}
-//     </div>
-//   );
-// };
-
-// export default RightSidebar;
-
 "use client";
 
 import { useReactFlow, useStore } from "@xyflow/react";
 import { MoreHorizontal, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { deleteWorkflowAction } from "../actions";
+import { deleteWorkflowAction, runWorkflowAction } from "../actions";
 import {
   nodeRegistry,
   type NodeDefination,
@@ -97,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ResizablePanel } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { validateGraph } from "../lib/validate-graph";
 
 // This file builds up to the RightSidebar component exported at the bottom: a
 // header with workflow actions (delete, run), then two tabs — a Toolbar for
@@ -359,13 +296,26 @@ function ActionsMenu({ workflowId }: { workflowId: string }) {
 }
 
 // Kicks off a run of the current workflow.
-function RunButton() {
+function RunButton({ workflowId }: { workflowId: string }) {
+  const { getNodes, getEdges } = useReactFlow<StepNodeType>();
+  const [isPending, startTransition] = useTransition();
   return (
     <Button
       size={"sm"}
       variant={"secondary"}
+      disabled={isPending}
       onClick={() => {
         // TODO: validate the graph and run the workflow (toggle to Stop while running).
+        const graph = { nodes: getNodes(), edges: getEdges() };
+        const problems = validateGraph(graph);
+        if (problems.length > 0) {
+          toast.error(problems[0]);
+          return;
+        }
+
+        startTransition(async () => {
+          await runWorkflowAction({ id: workflowId, graph });
+        });
       }}
     >
       <Play fill="primary" />
@@ -404,7 +354,7 @@ const RightSidebar = ({ workflowId }: { workflowId: string }) => {
       <Tabs value={tab} onValueChange={setTab} className="size-full gap-0">
         <div className="flex items-center justify-between border-b border-border p-2">
           <ActionsMenu workflowId={workflowId} />
-          <RunButton />
+          <RunButton workflowId={workflowId} />
         </div>
         <TabsList className="m-2 w-fit bg-background">
           <TabsTrigger
