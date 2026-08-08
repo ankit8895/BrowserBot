@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { liveblocks } from "@/lib/liveblocks";
 import { getWorkflow } from "@/features/workflows/data";
 import { notFound } from "next/navigation";
+import { ReactFlowProvider } from "@xyflow/react";
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
@@ -27,8 +28,12 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     },
   });
   return (
+    // The canvas and the sidebar's node palette live in separate components, so a
+    // single ReactFlowProvider wraps both to give them one shared React Flow store.
     <Room roomId={id}>
-      <WorkflowShell workflowId={id} />
+      <ReactFlowProvider>
+        <WorkflowShell workflowId={id} />
+      </ReactFlowProvider>
     </Room>
   );
 };
