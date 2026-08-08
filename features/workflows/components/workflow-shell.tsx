@@ -28,7 +28,7 @@ const WorkflowShell = ({ workflowId }: WorkflowShellProps) => {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize={"16rem"} minSize={"14rem"} maxSize={"36rem"}>
-        <RightSidebar />
+        <RightSidebar workflowId={workflowId} />
       </ResizablePanel>
     </ResizablePanelGroup>
   );
