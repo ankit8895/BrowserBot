@@ -41,7 +41,12 @@ export default function RootLayout({
           appearance={{ theme: shadcn }}
           taskUrls={{ "choose-organization": "/choose-organization" }}
         >
-          <ThemeProvider>
+          <ThemeProvider
+            attribute={"class"}
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <TooltipProvider>{children}</TooltipProvider>
             <Toaster />
           </ThemeProvider>
