@@ -5,6 +5,8 @@ import { liveblocks } from "@/lib/liveblocks";
 import { getWorkflow } from "@/features/workflows/data";
 import { notFound } from "next/navigation";
 import { ReactFlowProvider } from "@xyflow/react";
+import { auth as triggerAuth } from "@trigger.dev/sdk";
+import WorkflowRunsProvider from "@/features/workflows/components/workflow-runs-provider";
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
@@ -27,12 +29,26 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
       title: workflow.name,
     },
   });
+
+  // A read-only token scoped to this workflow's run tag, so the client can
+  // subscribe to its runs in realtime. Good for ~an hour of an open canvas.
+  const runsToken = await triggerAuth.createPublicToken({
+    scopes: {
+      read: {
+        tags: [`workflow:${id}`],
+      },
+    },
+    expirationTime: "1hr",
+  });
+
   return (
     // The canvas and the sidebar's node palette live in separate components, so a
     // single ReactFlowProvider wraps both to give them one shared React Flow store.
     <Room roomId={id}>
       <ReactFlowProvider>
-        <WorkflowShell workflowId={id} />
+        <WorkflowRunsProvider workflowId={id} accessToken={runsToken}>
+          <WorkflowShell workflowId={id} />
+        </WorkflowRunsProvider>
       </ReactFlowProvider>
     </Room>
   );

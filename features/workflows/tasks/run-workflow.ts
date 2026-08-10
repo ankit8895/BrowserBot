@@ -1,8 +1,16 @@
 import toposort from "toposort";
-import { logger, task } from "@trigger.dev/sdk";
+import { logger, task, metadata } from "@trigger.dev/sdk";
 import { Stagehand } from "@browserbasehq/stagehand";
 import { nodeExecutors } from "../nodes/node-executors";
 import { getWorkflow } from "../data";
+import { interpolate, NodeOutputs } from "../lib/interpolate";
+
+// One entry per node the run will walk, published to the run's metadata under
+// "steps" so the canvas can watch each node move through its lifecycle live.
+export type RunStep = {
+  nodeId: string;
+  status: "pending" | "running" | "done" | "failed";
+};
 
 // The Trigger.dev task the Run button fires. It loads the saved graph, works out
 // what order the nodes should run in, and walks them. For now each node just
@@ -30,6 +38,15 @@ export const runWorkflowTask = task({
 
     logger.log(`Running workflow ${workflow.name}`, { steps: order.length });
 
+    // Seed every step as "pending" up front and publish, so the canvas can render
+    // the full run as a list of spinners before any node starts. We mutate these
+    // entries in place and re-publish on every status change below.
+    const steps: RunStep[] = order.map((nodeId) => ({
+      nodeId,
+      status: "pending",
+    }));
+    metadata.set("steps", steps);
+
     // The run owns one Browserbase session, opened lazily on the first browser step
     // and reused by every later one, so the recording spans the whole flow. The
     // LLM routes through Browserbase's Model Gateway (BROWSERBASE_API_KEY), so no
@@ -52,18 +69,54 @@ export const runWorkflowTask = task({
       return stagehand;
     };
 
-    for (const id of order) {
+    // Each node's result, keyed by its id, so later nodes can pull from it.
+    // Because we walk in dependency order, every id a node references is already
+    // populated by the time we run it.
+    const outputs: NodeOutputs = {};
+
+    for (let i = 0; i < order.length; i++) {
+      const id = order[i];
+      const step = steps[i];
       const node = byId.get(id)!;
       logger.log(`Running step: ${node.data.title}`);
-      // TODO: actually execute the node instead of just logging it, and report
-      // its progress so the UI can watch the run live.
 
       const executor = nodeExecutors[node.data.type];
-      if (executor) await executor({ values: node.data.values, getStagehand });
+      if (!executor) continue;
+
+      // Mark running before the executor and flush immediately: the "done" set
+      // below happens before the SDK's next background flush, so without forcing
+      // it here the "running" state is overwritten and the canvas never spins.
+      step.status = "running";
+      metadata.set("steps", steps);
+      await metadata.flush();
+
+      // Swap {{ nodeId.path }} placeholders for upstream output before running.
+      const values = Object.fromEntries(
+        Object.entries(node.data.values).map(([key, text]) => [
+          key,
+          interpolate({ text, outputs }),
+        ]),
+      );
+
+      try {
+        outputs[id] = await executor({ values, getStagehand });
+      } catch (error) {
+        // Flush the "failed" state before the throw unwinds the run: a thrown run
+        // returns no output, so this flushed metadata is the only way the canvas
+        // ever learns which node failed.
+        step.status = "failed";
+        metadata.set("steps", steps);
+        await metadata.flush();
+        await stagehand?.close();
+        throw error;
+      }
+
+      step.status = "done";
+      metadata.set("steps", steps);
     }
 
     await stagehand?.close();
 
-    return { steps: order.length };
+    return { steps };
   },
 });
