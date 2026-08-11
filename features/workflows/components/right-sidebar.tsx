@@ -4,20 +4,6 @@ import { useReactFlow, useStore } from "@xyflow/react";
 import { MoreHorizontal, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { deleteWorkflowAction, runWorkflowAction } from "../actions";
-import {
-  nodeRegistry,
-  type NodeDefination,
-  type NdoeField,
-  type NodeType,
-  type StepNodeKind,
-  type StepNodeType,
-} from "../nodes/node-registry";
-import { cn } from "@/lib/utils";
-import React, { useState, useTransition } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Accordion,
   AccordionContent,
@@ -31,10 +17,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ResizablePanel } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { validateGraph } from "../lib/validate-graph";
+import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useTransition } from "react";
+import { deleteWorkflowAction, runWorkflowAction } from "../actions";
 import { useUpstreamConnections } from "../hooks/use-upstream-connections";
+import { validateGraph } from "../lib/validate-graph";
+import {
+  nodeRegistry,
+  type NdoeField,
+  type NodeDefination,
+  type NodeType,
+  type StepNodeKind,
+  type StepNodeType,
+} from "../nodes/node-registry";
+import NodeIcon from "./node-icon";
 
 // This file builds up to the RightSidebar component exported at the bottom: a
 // header with workflow actions (delete, run), then two tabs — a Toolbar for
@@ -44,23 +44,6 @@ import { useUpstreamConnections } from "../hooks/use-upstream-connections";
 // ---------------------------------------------------------------------------
 // Shared pieces — used by both the Toolbar and the Editor.
 // ---------------------------------------------------------------------------
-
-// The accent-colored icon chip, mirroring the node on the canvas.
-function NodeIcon({ type, className }: { type: NodeType; className?: string }) {
-  const def = nodeRegistry[type];
-  const Icon = def.icon;
-  return (
-    <span
-      className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-md",
-        def.accent,
-        className,
-      )}
-    >
-      <Icon className="size-3.5" />
-    </span>
-  );
-}
 
 // A titled, scrollable panel. Each tab renders its content inside one.
 function Section({
