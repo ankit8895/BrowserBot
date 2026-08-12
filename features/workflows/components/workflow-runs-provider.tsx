@@ -1,10 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useMemo } from "react";
 import { useRealtimeRunsWithTag } from "@trigger.dev/react-hooks";
+import React, { createContext, useContext, useMemo } from "react";
 import type { RunStep, runWorkflowTask } from "../tasks/run-workflow";
-import { runs } from "@trigger.dev/sdk";
-import { error } from "console";
 
 type WorkflowRun = ReturnType<
   typeof useRealtimeRunsWithTag<typeof runWorkflowTask>
@@ -72,6 +70,14 @@ export function useLatestRunSteps(): LatestRunSteps {
   }, [runs]);
 }
 
+// The Browserbase session id a finished run drove, read from its final output so
+// a panel can fetch the replay. Only the output carries it — the recording lags
+// the session close, so the live metadata never has it — so an in-flight or
+// failed run reports undefined.
+function sessionIdForRun(run: WorkflowRun): string | undefined {
+  return run.output?.browserbaseSessionId;
+}
+
 // One run flattened for the console: its identity and status, whether it's still
 // live, and its steps with everything each one produced.
 export interface ConsoleRun {
@@ -80,6 +86,8 @@ export interface ConsoleRun {
   createdAt: Date;
   isLive: boolean;
   steps: RunStep[];
+  // The Browserbase session id to replay, present only once the run has finished.
+  browserbaseSessionId?: string;
 }
 
 // Every run, newest first, with its steps resolved — the full history a console
@@ -97,6 +105,7 @@ export function useConsoleRuns(): ConsoleRun[] {
           createdAt: run.createdAt,
           isLive: isRunLive(run),
           steps: stepsForRun(run),
+          browserbaseSessionId: sessionIdForRun(run),
         })),
     [runs],
   );
