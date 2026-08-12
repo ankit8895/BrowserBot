@@ -6,7 +6,8 @@ import NodeIcon from "./node-icon";
 import { useConsoleRuns, type ConsoleRun } from "./workflow-runs-provider";
 import type { RunStep } from "../tasks/run-workflow";
 import { cn } from "@/lib/utils";
-import { MonitorPlay } from "lucide-react";
+import { MonitorPlay, Lock } from "lucide-react";
+import { useProPlan } from "../hooks/use-pro-plan";
 
 // A step is identified across the whole console by which run it belongs to and
 // which node it is — the same node id recurs across runs, so both are needed.
@@ -84,10 +85,18 @@ function ReplayRow({
   isSelected: boolean;
   onSelect: (selection: ReplaySelection) => void;
 }) {
+  // Watching a recording is a Pro feature. Wait for `isLoaded` so a Pro org
+  // never flashes a locked state on mount.
+  const { isLoaded, isPro, goToUpgrade } = useProPlan();
+  const isLocked = isLoaded && !isPro;
   return (
     <button
       type="button"
-      onClick={() => onSelect({ kind: "replay", runId: run.id })}
+      // Locked rows send the user to upgrade instead of opening the recording.
+      onClick={() =>
+        isLocked ? goToUpgrade() : onSelect({ kind: "replay", runId: run.id })
+      }
+      title={isLocked ? "Upgrade to Pro to watch replays" : undefined}
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs hover:bg-accent",
         isSelected && "bg-accent",
@@ -97,6 +106,9 @@ function ReplayRow({
         <MonitorPlay className="size-3.5" />
       </span>
       <span className="truncate font-medium">Replay</span>
+      {isLocked && (
+        <Lock className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
+      )}
     </button>
   );
 }
