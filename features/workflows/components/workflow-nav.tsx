@@ -64,7 +64,11 @@ const WorkflowNav = ({ workflows, onCreateWorkflow }: WorkflowNavProps) => {
                     <span>Workflows</span>
                   </SidebarMenuButton>
                 </PopoverTrigger>
-                <PopoverContent side="right" align="start" className="p-1">
+                <PopoverContent
+                  side="right"
+                  align="start"
+                  className="p-1 bg-background"
+                >
                   <SidebarMenu>
                     <SidebarMenuItem>
                       <SidebarMenuButton

@@ -1,7 +1,7 @@
 "use client";
 
 import { useReactFlow, useStore } from "@xyflow/react";
-import { MoreHorizontal, Play, Trash2, Lock } from "lucide-react";
+import { Lock, MoreHorizontal, Play, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -23,7 +23,12 @@ import { ResizablePanel } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import React, { useState, useTransition } from "react";
-import { deleteWorkflowAction, runWorkflowAction } from "../actions";
+import {
+  deleteWorkflowAction,
+  runWorkflowAction,
+  cancelWorkflowRunAction,
+} from "../actions";
+import { useProPlan } from "../hooks/use-pro-plan";
 import { useUpstreamConnections } from "../hooks/use-upstream-connections";
 import { validateGraph } from "../lib/validate-graph";
 import {
@@ -35,7 +40,8 @@ import {
   type StepNodeType,
 } from "../nodes/node-registry";
 import NodeIcon from "./node-icon";
-import { useProPlan } from "../hooks/use-pro-plan";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { useLiveRun } from "./workflow-runs-provider";
 
 // This file builds up to the RightSidebar component exported at the bottom: a
 // header with workflow actions (delete, run), then two tabs — a Toolbar for
@@ -73,7 +79,7 @@ function Section({
 
 // A single editor field for a node property. Renders a multi-line textarea when
 // the field opts in via `multiline`, otherwise a single-line input.
-function Field({
+function Fields({
   field,
   value,
   onChange,
@@ -88,24 +94,36 @@ function Field({
 }) {
   if (field.multiline) {
     return (
-      <Textarea
+      <>
+        <Label htmlFor={field.key} className="text-xs">
+          {field.label}
+          {field.required && <span className="text-destructive">*</span>}
+        </Label>
+        <Textarea
+          id={field.key}
+          value={value}
+          placeholder={field.placeholder}
+          onFocus={onFocus}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </>
+    );
+  }
+
+  return (
+    <Field>
+      <FieldLabel htmlFor={field.key} className="text-xs">
+        {field.label}
+        {field.required && <span className="text-destructive">*</span>}
+      </FieldLabel>
+      <Input
         id={field.key}
         value={value}
         placeholder={field.placeholder}
         onFocus={onFocus}
         onChange={(e) => onChange(e.target.value)}
       />
-    );
-  }
-
-  return (
-    <Input
-      id={field.key}
-      value={value}
-      placeholder={field.placeholder}
-      onFocus={onFocus}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    </Field>
   );
 }
 
@@ -148,11 +166,7 @@ function Inspector({ node }: { node: StepNodeType | undefined }) {
         ) : (
           def.fields.map((field) => (
             <div key={field.key} className="flex flex-col gap-1.5">
-              <Label htmlFor={field.key} className="text-xs">
-                {field.label}
-                {field.required && <span className="text-destructive">*</span>}
-              </Label>
-              <Field
+              <Fields
                 field={field}
                 value={values[field.key] ?? ""}
                 onFocus={() => setActiveFieldKey(field.key)}
@@ -285,17 +299,6 @@ function Palette() {
             <AccordionContent className="flex flex-col gap-0.5">
               {definations
                 .filter((def) => def.kind === section.kind)
-                // .map((def) => (
-                //   <Button
-                //     key={def.type}
-                //     variant={"ghost"}
-                //     onClick={() => add(def.type as NodeType)}
-                //     className="justify-start gap-2.5 px-1.5 text-xs"
-                //   >
-                //     <NodeIcon type={def.type as NodeType} />
-                //     {def.label}
-                //   </Button>
-                // ))}
                 .map((def) => {
                   const type = def.type as NodeType;
                   const locked = isLocked(type);
@@ -340,7 +343,7 @@ function ActionsMenu({ workflowId }: { workflowId: string }) {
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-48">
+      <DropdownMenuContent align="start" className="min-w-48 bg-background">
         <DropdownMenuItem
           variant="destructive"
           disabled={isPending}
@@ -363,17 +366,43 @@ function ActionsMenu({ workflowId }: { workflowId: string }) {
   );
 }
 
-// Kicks off a run of the current workflow.
+// Toggles between running the current workflow and stopping the run in flight.
+// While a run is live it becomes a Stop button that cancels that run; otherwise
+// it validates the graph and kicks off a new run.
 function RunButton({ workflowId }: { workflowId: string }) {
   const { getNodes, getEdges } = useReactFlow<StepNodeType>();
   const [isPending, startTransition] = useTransition();
+  // The run in flight, if any. At most one is live at a time, so its presence
+  // decides which mode the button is in.
+  const liveRun = useLiveRun();
+
+  if (liveRun) {
+    return (
+      <Button
+        size={"sm"}
+        variant={"destructive"}
+        disabled={isPending}
+        onClick={() => {
+          startTransition(async () => {
+            try {
+              await cancelWorkflowRunAction(liveRun.id);
+            } catch {
+              toast.error("Couldn't stop the run");
+            }
+          });
+        }}
+      >
+        <Square fill="currentColor" />
+        Stop
+      </Button>
+    );
+  }
   return (
     <Button
       size={"sm"}
       variant={"secondary"}
       disabled={isPending}
       onClick={() => {
-        // TODO: validate the graph and run the workflow (toggle to Stop while running).
         const graph = { nodes: getNodes(), edges: getEdges() };
         const problems = validateGraph(graph);
         if (problems.length > 0) {

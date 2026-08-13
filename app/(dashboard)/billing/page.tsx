@@ -16,6 +16,9 @@ const BillingPage = () => {
         <PricingTable
           for="organization"
           newSubscriptionRedirectUrl="/billing"
+          appearance={{
+            variables: { colorPrimary: "#ffdc58", colorBackground: "#fff7e8" },
+          }}
         />
       </div>
     </div>

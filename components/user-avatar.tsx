@@ -16,7 +16,11 @@ const UserAvatar = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={"ghost"} size={"icon"} className="rounded-full">
+        <Button
+          variant={"ghost"}
+          size={"icon-sm"}
+          className="rounded-full self-start"
+        >
           <Avatar>
             <AvatarImage
               src={user?.imageUrl || "./images/avatar.webp"}
@@ -26,7 +30,7 @@ const UserAvatar = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="bg-background">
         <DropdownMenuItem onClick={() => openUserProfile()}>
           Profile
         </DropdownMenuItem>
