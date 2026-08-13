@@ -1,13 +1,12 @@
 "use client";
 
-import React from "react";
+import { cn } from "@/lib/utils";
+import { Lock, MonitorPlay } from "lucide-react";
 import prettyMilliseconds from "pretty-ms";
+import { useProPlan } from "../hooks/use-pro-plan";
+import type { RunStep } from "../tasks/run-workflow";
 import NodeIcon from "./node-icon";
 import { useConsoleRuns, type ConsoleRun } from "./workflow-runs-provider";
-import type { RunStep } from "../tasks/run-workflow";
-import { cn } from "@/lib/utils";
-import { MonitorPlay, Lock } from "lucide-react";
-import { useProPlan } from "../hooks/use-pro-plan";
 
 // A step is identified across the whole console by which run it belongs to and
 // which node it is — the same node id recurs across runs, so both are needed.
@@ -140,6 +139,7 @@ const LogsPanel = ({
             <span>{run.createdAt.toLocaleTimeString()}</span>
             <span className="lowercase">{run.status}</span>
           </div>
+
           {run.steps.map((step) => (
             <StepRow
               key={step.nodeId}

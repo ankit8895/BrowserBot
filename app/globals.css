@@ -2,6 +2,18 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+::-webkit-scrollbar {
+  @apply w-2.5 h-2.5;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-[#ffdc58] hover:bg-[#ffd12e] dark:bg-[#ffdc58] dark:hover:bg-[#ffd12e] border border-transparent border-solid bg-clip-padding;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -7,8 +6,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import NewWorkflowButton from "@/features/workflows/components/new-workflow-button";
 import { auth } from "@clerk/nextjs/server";
-import { PlusIcon, WorkflowIcon } from "lucide-react";
+import { WorkflowIcon } from "lucide-react";
 
 const page = async () => {
   await auth.protect();
@@ -24,10 +24,7 @@ const page = async () => {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button>
-          <PlusIcon />
-          New workflow
-        </Button>
+        <NewWorkflowButton />
       </EmptyContent>
     </Empty>
   );
