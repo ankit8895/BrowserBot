@@ -11,7 +11,6 @@ import { auth } from "@clerk/nextjs/server";
 import { WorkflowIcon } from "lucide-react";
 
 const page = async () => {
-  await auth.protect();
   return (
     <Empty className="min-h-svh border-none">
       <EmptyHeader>

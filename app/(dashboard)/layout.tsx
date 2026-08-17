@@ -7,7 +7,7 @@ const DashboardLayout = async ({
 }: Readonly<{ children: React.ReactNode }>) => {
   await auth.protect();
   return (
-    <SidebarProvider className="h-svh">
+    <SidebarProvider className="h-svh bg-background">
       <AppSidebar />
       <SidebarInset className="min-h-0 overflow-hidden border shadow-none">
         {children}
