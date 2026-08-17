@@ -1,4 +1,3 @@
-import React from "react";
 import { TaskChooseOrganization } from "@clerk/nextjs";
 
 const ChooseOrganizationPage = () => {
